@@ -1,26 +1,22 @@
-/* Import spooky font from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Nosifer&display=swap');
 
-/* Overall page */
 body {
   font-family: 'Nosifer', cursive;
   text-align: center;
   margin: 20px;
-  background-color: #FF8C00; /* darker orange */
-  color: #000; /* keep text black */
+  background-color: #FF8C00;
+  color: #000;
 }
 
-/* Parts selection area */
 #parts-container {
   margin-bottom: 20px;
 }
 
-/* Buttons for selecting parts */
 #parts-container button {
   margin: 5px;
   padding: 8px 12px;
-  background-color: #000; /* black */
-  color: #fff; /* white text */
+  background-color: #000;
+  color: #fff;
   border: 2px solid #000;
   border-radius: 6px;
   font-weight: bold;
@@ -30,28 +26,26 @@ body {
 
 #parts-container button:hover {
   transform: scale(1.1);
-  background-color: #333; /* dark gray on hover */
+  background-color: #333;
 }
 
-/* Canvas container */
 #canvas-container {
   margin: 0 auto;
   width: 90vw;
-  max-width: 800px;
+  max-width: 1000px;
   height: 90vw;
-  max-height: 800px;
-  border: 4px solid #000; /* thicker black border */
-  background-color: #FFF0D1; /* very light cream/orange for contrast */
+  max-height: 900px;
+  border: 4px solid #000;
+  background-color: #FFF0D1;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
   border-radius: 12px;
 }
 
-/* Export button */
 #export-btn {
   margin-top: 20px;
   padding: 10px 16px;
-  background-color: #000; /* black */
-  color: #fff; /* white text */
+  background-color: #000;
+  color: #fff;
   border: 2px solid #000;
   border-radius: 8px;
   font-size: 16px;
@@ -61,5 +55,5 @@ body {
 
 #export-btn:hover {
   transform: scale(1.05);
-  background-color: #333; /* dark gray on hover */
+  background-color: #333;
 }
