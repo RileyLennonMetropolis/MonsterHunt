@@ -194,6 +194,64 @@ function loadImage(src, callback) {
   img.onload = () => callback(img);
   img.onerror = () => console.error("Failed to load image:", src);
 }
+/* ======= Name modal (mobile-friendly) ======= */
+function buildNameModal() {
+  if (document.getElementById('name-modal')) return; // already built
+  const modal = document.createElement('div');
+  modal.id = 'name-modal';
+  modal.innerHTML = `
+    <div class="card">
+      <h2>Name your monster</h2>
+      <input id="monster-name-input" type="text" placeholder="e.g., Thunder Fangs" />
+      <div class="actions">
+        <button class="secondary" id="cancel-name">Cancel</button>
+        <button id="save-name">Save</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Close on backdrop tap
+  modal.addEventListener('click', (e) => {
+    if (e.target.id === 'name-modal') closeNameModal();
+  });
+
+  // Buttons
+  document.getElementById('cancel-name').addEventListener('click', closeNameModal);
+  document.getElementById('save-name').addEventListener('click', () => {
+    const val = document.getElementById('monster-name-input').value.trim();
+    setMonsterName(val);
+    closeNameModal();
+  });
+
+  // Keyboard: Enter = save, Esc = cancel
+  document.getElementById('monster-name-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const val = e.currentTarget.value.trim();
+      setMonsterName(val);
+      closeNameModal();
+    } else if (e.key === 'Escape') {
+      closeNameModal();
+    }
+  });
+}
+
+function openNameModal() {
+  buildNameModal();
+  const modal = document.getElementById('name-modal');
+  const input = document.getElementById('monster-name-input');
+  // Pre-fill with current name if present
+  const current = (window.nameText && window.nameText.text && window.nameText.text()) || '';
+  input.value = current;
+  modal.style.display = 'flex';
+  // focus after it’s visible
+  setTimeout(() => { input.focus(); input.select(); }, 0);
+}
+
+function closeNameModal() {
+  const modal = document.getElementById('name-modal');
+  if (modal) modal.style.display = 'none';
+}
 
 /* ============ Restore saved parts & set up buttons/export/name ============ */
 
@@ -270,16 +328,13 @@ window.addEventListener('load', () => {
   });
 
   // Name button: prompt and set
-  const nameBtn = document.getElementById('name-btn');
-  if (nameBtn) {
-    nameBtn.addEventListener('click', () => {
-      const current = (nameText && nameText.text()) || '';
-      const value = window.prompt("Name your monster:", current);
-      if (value !== null) {
-        setMonsterName(value.trim());
-      }
-    });
-  }
+const nameBtn = document.getElementById('name-btn');
+if (nameBtn) {
+  // Use both 'click' and 'touchend' for mobile responsiveness
+  const open = (e) => { e.preventDefault(); openNameModal(); };
+  nameBtn.addEventListener('click', open);
+  nameBtn.addEventListener('touchend', open, { passive: false });
+}
 });
 
 /* ============ Keep stage responsive; rescale parts & name on resize ============ */
