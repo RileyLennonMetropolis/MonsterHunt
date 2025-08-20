@@ -1,6 +1,7 @@
 // Categories of monster parts
 const categories = ['body','eyes','mouth','leftarm','rightarm','leftleg','rightleg','nose','accessory'];
 let selectedParts = {}; // Stores Konva.Image objects
+let nameText = null;    // Konva.Text for the monster name
 
 // Get category from URL (kept for future navigation)
 const urlParams = new URLSearchParams(window.location.search);
@@ -29,14 +30,14 @@ stage.add(layer);
 
 /* =========================== Helpers =========================== */
 
-// Fit parts within a fraction of the stage (no upscaling beyond 1)
-const FIT_FRACTION = 1.7; // 170% of stage size; tweak to taste
+// Fit parts within a fraction of the stage (no upscaling above 1)
+const FIT_FRACTION = 1.5; // 150% of stage size; tweak to taste
 
 function computeScale(img) {
   const maxW = stage.width() * FIT_FRACTION;
   const maxH = stage.height() * FIT_FRACTION;
   const s = Math.min(maxW / img.width, maxH / img.height);
-  return Math.min(1, s); // never upscale above 1 (keeps exports sharp)
+  return Math.min(1, s); // never upscale above 1
 }
 
 function centerPosition(img, scale) {
@@ -49,7 +50,6 @@ function centerPosition(img, scale) {
 }
 
 function getRect(node) {
-  // getClientRect accounts for scale/rotation; perfect for visibility checks
   return node.getClientRect();
 }
 
@@ -63,7 +63,6 @@ function isRectOnStage(rect) {
 }
 
 function bringOnStage(node) {
-  // If off-screen, gently recenter
   const img = node.image();
   if (!img) return;
   const scale = node.scaleX() || 1;
@@ -71,13 +70,51 @@ function bringOnStage(node) {
   node.position({ x, y });
 }
 
-/* ========================= Image loader ======================== */
+/* ===================== Monster Name helpers ===================== */
 
-function loadImage(src, callback) {
-  const img = new Image();
-  img.src = src;
-  img.onload = () => callback(img);
-  img.onerror = () => console.error("Failed to load image:", src);
+// Dynamic font size based on stage width (nice on mobile & desktop)
+function computeNameFontSize() {
+  const s = Math.round(stage.width() * 0.08); // ~8% of stage width
+  return Math.max(18, Math.min(s, 72));       // clamp 18–72px
+}
+
+// Ensure there is a Konva.Text for the name; create if needed
+function ensureNameText() {
+  if (nameText) {
+    // update width & font each time we call this
+    nameText.width(stage.width());
+    nameText.fontSize(computeNameFontSize());
+    nameText.position({ x: 0, y: 8 }); // top with small padding
+    layer.batchDraw();
+    return nameText;
+  }
+
+nameText = new Konva.Text({
+  text: '',
+  x: 0,
+  y: 8,
+  width: stage.width(),
+  align: 'center',
+  fontSize: computeNameFontSize(),
+  fontFamily: 'Avengeance Mightiest Avenger',
+  fill: '#000',       // black text only
+  listening: false
+});
+
+  layer.add(nameText);
+  layer.moveToTop(); // keep name above parts
+  layer.batchDraw();
+  return nameText;
+}
+
+function setMonsterName(text) {
+  const t = ensureNameText();
+  t.text(text || '');
+  layer.batchDraw();
+
+  // Persist
+  const saved = JSON.parse(localStorage.getItem('monsterName')) || {};
+  localStorage.setItem('monsterName', JSON.stringify({ text: t.text() }));
 }
 
 /* ============ Buttons (thumbnail images instead of text) ============ */
@@ -126,12 +163,11 @@ function selectPart(category, option) {
     konvaImg.on('dragmove', () => {
       const pos = konvaImg.position();
       const saved = JSON.parse(localStorage.getItem('monsterParts')) || {};
-      // We only store position; scale is recomputed from stage size each time
       saved[category] = { src, x: pos.x, y: pos.y };
       localStorage.setItem('monsterParts', JSON.stringify(saved));
     });
 
-    // On drop: just save (no snapping/clamping)
+    // On drop: just save — no clamping (prevents snapping)
     konvaImg.on('dragend', () => {
       const pos = konvaImg.position();
       const saved = JSON.parse(localStorage.getItem('monsterParts')) || {};
@@ -150,9 +186,19 @@ function selectPart(category, option) {
   });
 }
 
-/* ============ Restore saved parts (rescale; rescue if off-screen) ============ */
+/* ========================= Image loader ======================== */
+
+function loadImage(src, callback) {
+  const img = new Image();
+  img.src = src;
+  img.onload = () => callback(img);
+  img.onerror = () => console.error("Failed to load image:", src);
+}
+
+/* ============ Restore saved parts & set up buttons/export/name ============ */
 
 window.addEventListener('load', () => {
+  // Restore parts
   const savedParts = JSON.parse(localStorage.getItem('monsterParts')) || {};
 
   for (let cat in savedParts) {
@@ -172,7 +218,7 @@ window.addEventListener('load', () => {
 
       layer.add(konvaImg);
 
-      // If previously saved position is off-screen (or now off after scaling), recenter it once
+      // If off-screen (or now off after scaling), recenter it once
       const rect = getRect(konvaImg);
       if (!isRectOnStage(rect)) {
         const { x, y } = centerPosition(img, scale);
@@ -199,9 +245,17 @@ window.addEventListener('load', () => {
     });
   }
 
+  // Restore name (if any)
+  const savedName = JSON.parse(localStorage.getItem('monsterName'));
+  ensureNameText();
+  if (savedName && savedName.text) {
+    nameText.text(savedName.text);
+    layer.batchDraw();
+  }
+
   createButtons(currentCategory);
 
-  // Export button (Konva)
+  // Export button
   document.getElementById('export-btn').addEventListener('click', () => {
     try {
       const dataURL = stage.toDataURL({ pixelRatio: 2 });
@@ -214,28 +268,37 @@ window.addEventListener('load', () => {
       alert("Export failed. Check console for errors.");
     }
   });
+
+  // Name button: prompt and set
+  const nameBtn = document.getElementById('name-btn');
+  if (nameBtn) {
+    nameBtn.addEventListener('click', () => {
+      const current = (nameText && nameText.text()) || '';
+      const value = window.prompt("Name your monster:", current);
+      if (value !== null) {
+        setMonsterName(value.trim());
+      }
+    });
+  }
 });
 
-/* ============ Keep stage responsive; rescale parts on resize ============ */
+/* ============ Keep stage responsive; rescale parts & name on resize ============ */
 
 window.addEventListener('resize', () => {
   const { width, height } = getStageSize();
   stage.width(width);
   stage.height(height);
 
-  // For each part: recompute scale based on new stage size,
-  // keep the visual center in roughly the same place, and ensure it's visible.
+  // Parts: recompute scale; keep visual center; rescue if off-stage
   Object.entries(selectedParts).forEach(([cat, node]) => {
     const img = node.image();
     if (!img) return;
 
-    // current visual center
     const oldScale = node.scaleX() || 1;
     const oldW = img.width * oldScale;
     const oldH = img.height * oldScale;
     const oldCenter = { cx: node.x() + oldW / 2, cy: node.y() + oldH / 2 };
 
-    // new scale
     const newScale = computeScale(img);
     node.scaleX(newScale);
     node.scaleY(newScale);
@@ -243,17 +306,21 @@ window.addEventListener('resize', () => {
     const newW = img.width * newScale;
     const newH = img.height * newScale;
 
-    // keep center stable
-    const newX = oldCenter.cx - newW / 2;
-    const newY = oldCenter.cy - newH / 2;
-    node.position({ x: newX, y: newY });
+    node.position({ x: oldCenter.cx - newW / 2, y: oldCenter.cy - newH / 2 });
 
-    // if off-stage after resize, bring back to center
     const rect = getRect(node);
     if (!isRectOnStage(rect)) {
       bringOnStage(node);
     }
   });
+
+  // Name: stretch to stage width and recompute font size
+  ensureNameText();
+  if (nameText) {
+    nameText.width(stage.width());
+    nameText.fontSize(computeNameFontSize());
+    nameText.y(8);
+  }
 
   stage.batchDraw();
 });
