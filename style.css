@@ -1,44 +1,104 @@
-@import url('https://fonts.googleapis.com/css2?family=Nosifer&display=swap');
+/* Import Avengeance font */
+@import url('https://fonts.cdnfonts.com/css/avengeance-mightiest-avenger');
 
+/* --- Base Styles --- */
 body {
-  font-family: 'Nosifer', cursive;
+  font-family: 'Avengeance Mightiest Avenger', sans-serif;
   text-align: center;
-  margin: 20px;
-  background-color: #FF8C00;
-  color: #000;
+  margin: 0;
+  padding: 0;
+  background-color: #2b2876; /* dark blue background */
+  color: #fff; /* switch text to white so it stands out */
+}
+/* Logo styling */
+#logo {
+  margin: 20px auto;
 }
 
+#logo img {
+  max-width: 80%;   /* scale responsively */
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+h1, h3, button {
+  font-family: 'Avengeance Mightiest Avenger', sans-serif;
+}
+
+h1 {
+  margin-bottom: 15px;
+  font-size: 2.5rem;
+}
+
+/* --- Part selector grid & buttons --- */
 #parts-container {
-  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2×2 grid */
+  gap: 12px;                              /* larger spacing */
+  justify-content: center;
+  max-width: 260px;                        /* fits 2× 120px squares + gap */
+  margin: 0 auto 20px auto;                /* center grid */
+}
+
+#parts-container h3 {
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+  grid-column: 1 / -1; /* let heading span across grid */
 }
 
 #parts-container button {
-  margin: 5px;
-  padding: 8px 12px;
-  background-color: #000;
-  color: #fff;
+  margin: 0;
+  padding: 0;
+  background: #fff;
   border: 2px solid #000;
   border-radius: 6px;
-  font-weight: bold;
   cursor: pointer;
   transition: transform 0.1s, background-color 0.1s;
+  width: 120px;   /* bigger squares */
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* keep image contained on hover */
 }
 
 #parts-container button:hover {
-  transform: scale(1.1);
-  background-color: #333;
+  transform: scale(1.05);
+  background-color: #eee;
 }
 
+/* Zoom the thumbnail inside each square */
+#parts-container button {
+  position: relative;     /* needed for centering the zoomed image */
+  overflow: hidden;       /* crop excess */
+}
+
+#parts-container button img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;     /* keep aspect ratio, respect transparency */
+  transform: translate(-50%, -50%) scale(1.8); /* <— increase this to zoom more */
+  transform-origin: center center;
+  pointer-events: none;
+}
+
+/* --- Canvas & export button --- */
 #canvas-container {
   margin: 0 auto;
   width: 90vw;
   max-width: 1000px;
-  height: 90vw;
-  max-height: 900px;
+  aspect-ratio: 1 / 1;
   border: 4px solid #000;
   background-color: #FFF0D1;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #export-btn {
@@ -48,7 +108,7 @@ body {
   color: #fff;
   border: 2px solid #000;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 1rem;
   cursor: pointer;
   transition: transform 0.1s, background-color 0.1s;
 }
@@ -56,4 +116,52 @@ body {
 #export-btn:hover {
   transform: scale(1.05);
   background-color: #333;
+}
+
+/* --- Responsive Styles --- */
+@media (max-width: 600px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  /* keep 2×2 grid on phones, with larger squares */
+  #parts-container {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 260px;
+  }
+
+  /* These font-size/padding rules won’t affect image buttons,
+     but keep them for the export button */
+  #parts-container button,
+  #export-btn {
+    font-size: 1.25rem;
+    padding: 14px 22px;
+  }
+
+  #canvas-container {
+    width: 90%;
+    max-width: 400px;
+    aspect-ratio: 1 / 1;
+    margin-bottom: 10px;
+  }
+}
+
+/* On bigger screens, show all 4 buttons in a row (wider layout) */
+@media (min-width: 900px) {
+  #parts-container {
+    grid-template-columns: repeat(4, 1fr); /* 1×4 row */
+    max-width: 520px;                      /* 4×120 + 3×12 + buffer */
+  }
+}
+
+@media (max-width: 400px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  #parts-container button,
+  #export-btn {
+    font-size: 1.1rem;
+    padding: 12px 18px;
+  }
 }
