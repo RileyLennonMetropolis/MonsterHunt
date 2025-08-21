@@ -123,7 +123,7 @@ function createButtons(category) {
   const partsContainer = document.getElementById('parts-container');
   partsContainer.innerHTML = `<h3>Select ${category}</h3>`;
 
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 6; i++) {
     const btn = document.createElement('button');
 
     const img = document.createElement('img');
